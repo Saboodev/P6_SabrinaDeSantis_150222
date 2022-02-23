@@ -3,18 +3,13 @@ const fs = require('fs');
 
 // Créer une sauce
 exports.createSauces = (req, res, next) => {
-    console.log("coucou");
     const saucesObject = JSON.parse(req.body.sauce);
-    console.log("---contenu saucesObject");
-    console.log(saucesObject);
     delete saucesObject._id;
 
     const sauces = new Sauces({
         ...saucesObject,
         imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
     });
-    console.log("---contenu sauces");
-    console.log(sauces);
     sauces.save()
         .then(() => res.status(201).json({ message: 'Sauce enregistrée !'}))
         .catch(error => res.status(400).json({ error }));
@@ -22,7 +17,6 @@ exports.createSauces = (req, res, next) => {
 
 // Liker ou disliker une sauce
 exports.likesAndDislikes = (req, res, next) => {
-    console.log('je suis le controller like');
 
     if (req.body.like === 1) {
         console.log(req.body);
@@ -79,7 +73,7 @@ exports.likesAndDislikes = (req, res, next) => {
 exports.modifySauces = (req, res, next) => {
     if(req.file){
         // Si l'on modifie l'image 
-        Sauce.findOne({ _id: req.params.id })
+        Sauces.findOne({ _id: req.params.id })
             .then(sauces => {
                 // On supprime l'ancienne image
                 const filename = sauces.imageUrl.split('/images/')[1];
@@ -90,13 +84,14 @@ exports.modifySauces = (req, res, next) => {
     }
     // Modifier la sauce
     const saucesObject = req.file ? {
-        ...JSON.parse(req.body.sauces),
+        ...JSON.parse(req.body.sauce),
         imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
         } : { ...req.body };
     Sauces.updateOne({ _id: req.params.id }, { ...saucesObject, _id: req.params.id })
         .then(() => res.status(200).json({ message: 'Sauce modifiée !'}))
         .catch(error => res.status(400).json({ error }));
 };
+
 
 // Supprimer une sauce
 exports.deleteSauces = (req, res, next) => {
