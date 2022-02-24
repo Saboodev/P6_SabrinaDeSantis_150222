@@ -1,15 +1,27 @@
+// Importation de bcrypt pour hasher le mdp
 const bcrypt = require('bcrypt');
+// Importation de crypto-js pour le chiffrement du mail
+const cryptoJs = require("crypto-js");
 const jwt = require('jsonwebtoken');
+
+const dotenv = require('dotenv').config();
 
 const User = require('../models/user');
 
+// hasher le mdp avant de l'envoyer dans la bdd
+// salt = 10 le nombre de fois où l'algorithme de hashage sera exécuté
 exports.signup = (req, res, next) => {
+
+    // chiffrer l'email avant l'envoi dans la bdd
+    const emailCryptoJs = cryptoJs.HmacSHA256(req.body.email, `${process.env.CRYPTOJS_EMAIL}`).toString();
     bcrypt.hash(req.body.password, 10)
       .then(hash => {
         const user = new User({
-          email: req.body.email,
+          email: emailCryptoJs,
           password: hash
         });
+        console.log(user);
+        // envoi du user dans la bdd
         user.save()
           .then(() => res.status(201).json({ message: 'Utilisateur créé !' }))
           .catch(error => res.status(400).json({ error }));
@@ -18,7 +30,10 @@ exports.signup = (req, res, next) => {
   };
 
   exports.login = (req, res, next) => {
-    User.findOne({ email: req.body.email })
+
+    const emailCryptoJs = cryptoJs.HmacSHA256(req.body.email, `${process.env.CRYPTOJS_EMAIL}`).toString();
+
+    User.findOne({ email: emailCryptoJs })
       .then(user => {
         if (!user) {
           return res.status(401).json({ error: 'Utilisateur non trouvé !' });
